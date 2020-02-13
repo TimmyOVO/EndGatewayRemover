@@ -1,0 +1,18 @@
+[
+  {
+    "modid": "EnderGatewayRemover",
+    "name": "EnderGatewayRemover",
+    "description": "",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": [
+      "TimmyOVO"
+    ],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
