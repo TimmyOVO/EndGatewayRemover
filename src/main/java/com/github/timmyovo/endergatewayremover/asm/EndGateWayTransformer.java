@@ -11,17 +11,16 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class EndGateWayTransformer implements IClassTransformer {
+    static {
+        SimpleClassModifier.class.getClass();
+    }
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
-        if (transformedName.equals("com.github.timmyovo.endergatewayremover.asm.SimpleClassModifier")) {
-            return basicClass;
-        }
         Optional<SimpleClassModifier> transform = SimpleClassModifier.transform(transformedName, basicClass);
         return transform.isPresent() ? ((Supplier<byte[]>) () -> {
             SimpleClassModifier simpleClassModifier = transform.get();
             simpleClassModifier.findMethod("generate", "(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;)Z").ifPresent(methodNode -> {
-                methodNode.instructions.insertBefore(methodNode.instructions.getFirst().getNext(), generatePrintln("nmsl"));
                 methodNode.instructions.iterator().forEachRemaining(abstractInsnNode -> {
                     if (abstractInsnNode.getOpcode() == Opcodes.GETSTATIC) {
                         FieldInsnNode fieldInsnNode = (FieldInsnNode) abstractInsnNode;
