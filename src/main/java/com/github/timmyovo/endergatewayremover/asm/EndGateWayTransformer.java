@@ -1,13 +1,11 @@
 package com.github.timmyovo.endergatewayremover.asm;
 
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.world.gen.feature.WorldGenEndGateway;
-import net.minecraft.world.gen.feature.WorldGenEndPodium;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -23,13 +21,29 @@ public class EndGateWayTransformer implements IClassTransformer {
         return transform.isPresent() ? ((Supplier<byte[]>) () -> {
             SimpleClassModifier simpleClassModifier = transform.get();
             simpleClassModifier.findMethod("generate", "(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;)Z").ifPresent(methodNode -> {
-                methodNode.instructions.clear();
-                methodNode.maxStack = 0;
-                methodNode.maxLocals = 0;
-                methodNode.instructions.add(new InsnNode(Opcodes.ICONST_1));
-                methodNode.instructions.add(new InsnNode(Opcodes.IRETURN));
+                methodNode.instructions.insertBefore(methodNode.instructions.getFirst().getNext(), generatePrintln("nmsl"));
+                methodNode.instructions.iterator().forEachRemaining(abstractInsnNode -> {
+                    if (abstractInsnNode.getOpcode() == Opcodes.GETSTATIC) {
+                        FieldInsnNode fieldInsnNode = (FieldInsnNode) abstractInsnNode;
+                        if (fieldInsnNode.name.equals("END_PORTAL") && fieldInsnNode.owner.equals("net/minecraft/init/Blocks")) {
+                            fieldInsnNode.name = "AIR";
+                            System.out.println("Injected to WorldGenEndPodium.java");
+                        }
+                    }
+                });
             });
             return simpleClassModifier.export();
         }).get() : basicClass;
+    }
+
+    protected InsnList generatePrintln(String content) {
+//        GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+//        LDC "asda"
+//        INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
+        InsnList insnList = new InsnList();
+        insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;"));
+        insnList.add(new LdcInsnNode(content));
+        insnList.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V"));
+        return insnList;
     }
 }
